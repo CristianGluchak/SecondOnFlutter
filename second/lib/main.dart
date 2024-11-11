@@ -1,7 +1,20 @@
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:second/controls/text_form_field_wdiget.dart';
+import 'package:second/firebase_options.dart';
+import 'package:second/services/authentication_service.dart';
+import 'package:second/views/forgot_password_view.dart';
 import 'package:second/views/home_view.dart';
+import 'package:second/views/login_view.dart';
+import 'package:second/views/new_user_view.dart';
+import 'package:second/widgets/snack_bar_widget.dart';
 
-void main() {
+Future main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   runApp(const MyApp());
 }
 
@@ -16,9 +29,10 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: SecondApp(),
+      home: const SecondApp(),
       routes: {
-        'homePage': (context) => HomeView(),
+        '/newUser': (context) => NewUserView(),
+        '/esqueceuSenha': (context) => const ForgotPasswordView(),
       },
     );
   }
@@ -32,91 +46,11 @@ class SecondApp extends StatefulWidget {
 }
 
 class _SecondAppState extends State<SecondApp> {
-  final _form = GlobalKey<FormState>();
-
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          'Login',
-          style: TextStyle(color: Colors.white),
-        ),
-        backgroundColor: Colors.purple[300],
-      ),
-      body: Form(
-        key: _form,
-        child: Column(
-          children: [
-            SizedBox(height: 150),
-            Text(
-              'Login',
-              style: TextStyle(color: Colors.blue[700], fontSize: 30),
-            ),
-            SizedBox(height: 13),
-            Padding(
-              padding: EdgeInsets.only(left: 20, right: 20),
-              child: TextFormField(
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'por favor, insira seu email';
-                  }
-                  return null;
-                },
-                decoration: InputDecoration(
-                  prefixIcon: Padding(
-                    padding: EdgeInsets.only(), // add padding to adjust icon
-                    child: Icon(Icons.person),
-                  ),
-                  labelText: 'Email',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-              ),
-            ),
-            SizedBox(height: 13),
-            Padding(
-              padding: EdgeInsets.only(left: 20, right: 20),
-              child: TextFormField(
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'por favor, insira sua senha';
-                  }
-                  return null;
-                },
-                decoration: InputDecoration(
-                  prefixIcon: Padding(
-                    padding: EdgeInsets.only(), // add padding to adjust icon
-                    child: Icon(Icons.lock),
-                  ),
-                  labelText: 'Senha',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-              ),
-            ),
-            SizedBox(height: 20),
-            TextButton(
-              onPressed: () {
-                if (_form.currentState!.validate()) {
-                  Navigator.pushNamed(context, 'homePage');
-                }
-              },
-              child: Container(
-                color: Colors.purple[300],
-                padding:
-                    const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
-                child: const Text(
-                  'Entrar',
-                  style: TextStyle(color: Colors.white, fontSize: 20),
-                ),
-              ),
-            )
-          ],
-        ),
-      ),
-    );
+    return StreamBuilder<User?>(
+        stream: FirebaseAuth.instance.userChanges(),
+        builder: (context, snapshot) =>
+            snapshot.hasData ? HomeView(user: snapshot.data!) : LoginView());
   }
 }
